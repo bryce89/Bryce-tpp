@@ -12,6 +12,7 @@ app.use('/api/projects', require('./routes/projects'));
 app.use('/api/assignments', require('./routes/assignments'));
 
 app.use('/api/tests', require('./routes/tests'));
+app.use('/api/seed', require('./routes/seed'));
 
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));

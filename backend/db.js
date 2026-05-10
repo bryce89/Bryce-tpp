@@ -63,6 +63,10 @@ async function initDB() {
     );
   `);
 
+  await seedIfEmpty();
+}
+
+async function seedIfEmpty() {
   // Seed skills if empty
   const { rows: skillRows } = await pool.query('SELECT COUNT(*) AS c FROM skills');
   if (parseInt(skillRows[0].c, 10) === 0) {
@@ -204,4 +208,12 @@ async function initDB() {
   }
 }
 
-module.exports = { pool, initDB };
+async function forceSeed() {
+  await pool.query(`
+    TRUNCATE assignments, project_skills, engineer_skills, projects, engineers, skills RESTART IDENTITY CASCADE
+  `);
+  await seedIfEmpty();
+}
+
+module.exports = { pool, initDB, forceSeed };
+
