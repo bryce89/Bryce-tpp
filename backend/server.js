@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const { initDB } = require('./db');
 
 // Future RBAC middleware stub:
 // const rbac = require('./middleware/rbac');
@@ -9,9 +10,6 @@ const path = require('path');
 const app = express();
 app.use(cors());
 app.use(express.json());
-
-// Initialize DB (runs seed on first boot)
-require('./db');
 
 // Routes
 app.use('/api/skills', require('./routes/skills'));
@@ -28,6 +26,14 @@ app.use(express.static(distPath));
 app.get('*', (req, res) => res.sendFile(path.join(distPath, 'index.html')));
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-  console.log(`Project Mapper running on http://localhost:${PORT}`);
-});
+
+initDB()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`Project Mapper running on http://localhost:${PORT}`);
+    });
+  })
+  .catch(err => {
+    console.error('Failed to initialise database:', err);
+    process.exit(1);
+  });

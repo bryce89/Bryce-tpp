@@ -1,9 +1,9 @@
 const express = require('express');
-const db = require('../db');
+const { pool } = require('../db');
 const router = express.Router();
 
 // GET /api/projects
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   const { skill, search } = req.query;
 
   let query = `SELECT DISTINCT p.* FROM projects p`;
@@ -12,142 +12,151 @@ router.get('/', (req, res) => {
 
   if (skill) {
     query += ` JOIN project_skills ps ON ps.project_id = p.id JOIN skills sk ON sk.id = ps.skill_id`;
-    conditions.push(`sk.name = ?`);
     params.push(skill);
+    conditions.push(`sk.name = $${params.length}`);
   }
 
   if (search) {
-    conditions.push(`(p.name LIKE ? OR p.description LIKE ?)`);
     const like = `%${search}%`;
-    params.push(like, like);
+    params.push(like);
+    const n = params.length;
+    params.push(like);
+    conditions.push(`(p.name ILIKE $${n} OR p.description ILIKE $${n + 1})`);
   }
 
   if (conditions.length) query += ` WHERE ` + conditions.join(' AND ');
   query += ` ORDER BY p.start_date, p.name`;
 
-  const projects = db.prepare(query).all(...params);
+  const { rows: projects } = await pool.query(query, params);
 
-  // Attach skills and engineer_count
-  const result = projects.map(project => {
-    const skills = db.prepare(`
+  const result = await Promise.all(projects.map(async project => {
+    const { rows: skills } = await pool.query(`
       SELECT s.id, s.name, ps.effort_days
       FROM project_skills ps
       JOIN skills s ON s.id = ps.skill_id
-      WHERE ps.project_id = ?
+      WHERE ps.project_id = $1
       ORDER BY s.name
-    `).all(project.id);
+    `, [project.id]);
 
-    const { count } = db.prepare(`
-      SELECT COUNT(DISTINCT engineer_id) as count FROM assignments WHERE project_id = ?
-    `).get(project.id);
+    const { rows: countRows } = await pool.query(
+      'SELECT COUNT(DISTINCT engineer_id) AS count FROM assignments WHERE project_id = $1',
+      [project.id]
+    );
 
-    return { ...project, skills, engineer_count: count };
-  });
+    return { ...project, skills, engineer_count: parseInt(countRows[0].count, 10) };
+  }));
 
   res.json(result);
 });
 
 // GET /api/projects/:id
-router.get('/:id', (req, res) => {
-  const project = db.prepare('SELECT * FROM projects WHERE id = ?').get(req.params.id);
-  if (!project) return res.status(404).json({ error: 'Not found' });
+router.get('/:id', async (req, res) => {
+  const { rows: projRows } = await pool.query('SELECT * FROM projects WHERE id = $1', [req.params.id]);
+  if (!projRows.length) return res.status(404).json({ error: 'Not found' });
+  const project = projRows[0];
 
-  const skills = db.prepare(`
+  const { rows: skills } = await pool.query(`
     SELECT s.id, s.name, ps.effort_days
     FROM project_skills ps
     JOIN skills s ON s.id = ps.skill_id
-    WHERE ps.project_id = ?
+    WHERE ps.project_id = $1
     ORDER BY s.name
-  `).all(req.params.id);
+  `, [req.params.id]);
 
-  const assignments = db.prepare(`
-    SELECT a.*, e.name as engineer_name, e.portfolio, e.role
+  const { rows: assignments } = await pool.query(`
+    SELECT a.*, e.name AS engineer_name, e.portfolio, e.role
     FROM assignments a
     JOIN engineers e ON e.id = a.engineer_id
-    WHERE a.project_id = ?
+    WHERE a.project_id = $1
     ORDER BY e.name
-  `).all(req.params.id);
+  `, [req.params.id]);
 
   res.json({ ...project, skills, assignments });
 });
 
 // POST /api/projects
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   const { name, description, start_date, end_date, total_effort_days, skill_ids = [] } = req.body;
   if (!name || !name.trim()) return res.status(400).json({ error: 'name is required' });
 
-  const result = db.prepare(`
-    INSERT INTO projects (name, description, start_date, end_date, total_effort_days)
-    VALUES (?, ?, ?, ?, ?)
-  `).run(name.trim(), description || null, start_date || null, end_date || null, total_effort_days || null);
+  const { rows } = await pool.query(
+    'INSERT INTO projects (name, description, start_date, end_date, total_effort_days) VALUES ($1,$2,$3,$4,$5) RETURNING *',
+    [name.trim(), description || null, start_date || null, end_date || null, total_effort_days || null]
+  );
+  const project = rows[0];
+  const id = project.id;
 
-  const id = result.lastInsertRowid;
-  const insertSkill = db.prepare('INSERT OR IGNORE INTO project_skills (project_id, skill_id, effort_days) VALUES (?, ?, ?)');
   for (const s of skill_ids) {
-    insertSkill.run(id, s.id, s.effort_days || null);
+    await pool.query(
+      'INSERT INTO project_skills (project_id, skill_id, effort_days) VALUES ($1,$2,$3) ON CONFLICT DO NOTHING',
+      [id, s.id, s.effort_days || null]
+    );
   }
 
-  const project = db.prepare('SELECT * FROM projects WHERE id = ?').get(id);
-  const skills = db.prepare(`
+  const { rows: skills } = await pool.query(`
     SELECT s.id, s.name, ps.effort_days FROM project_skills ps
-    JOIN skills s ON s.id = ps.skill_id WHERE ps.project_id = ? ORDER BY s.name
-  `).all(id);
+    JOIN skills s ON s.id = ps.skill_id WHERE ps.project_id = $1 ORDER BY s.name
+  `, [id]);
   res.status(201).json({ ...project, skills, assignments: [] });
 });
 
 // PUT /api/projects/:id
-router.put('/:id', (req, res) => {
+router.put('/:id', async (req, res) => {
   const { id } = req.params;
-  const existing = db.prepare('SELECT * FROM projects WHERE id = ?').get(id);
-  if (!existing) return res.status(404).json({ error: 'Not found' });
+  const { rows: existing } = await pool.query('SELECT * FROM projects WHERE id = $1', [id]);
+  if (!existing.length) return res.status(404).json({ error: 'Not found' });
+  const prev = existing[0];
 
   const { name, description, start_date, end_date, total_effort_days, skill_ids } = req.body;
   if (name !== undefined && !name.trim()) return res.status(400).json({ error: 'name cannot be empty' });
 
-  db.prepare(`
+  const { rows } = await pool.query(`
     UPDATE projects SET
-      name = COALESCE(?, name),
-      description = ?,
-      start_date = ?,
-      end_date = ?,
-      total_effort_days = ?
-    WHERE id = ?
-  `).run(
+      name = COALESCE($1, name),
+      description = $2,
+      start_date = $3,
+      end_date = $4,
+      total_effort_days = $5
+    WHERE id = $6
+    RETURNING *
+  `, [
     name ? name.trim() : null,
-    description !== undefined ? (description || null) : existing.description,
-    start_date !== undefined ? (start_date || null) : existing.start_date,
-    end_date !== undefined ? (end_date || null) : existing.end_date,
-    total_effort_days !== undefined ? (total_effort_days || null) : existing.total_effort_days,
+    description !== undefined ? (description || null) : prev.description,
+    start_date !== undefined ? (start_date || null) : prev.start_date,
+    end_date !== undefined ? (end_date || null) : prev.end_date,
+    total_effort_days !== undefined ? (total_effort_days || null) : prev.total_effort_days,
     id
-  );
+  ]);
+  const project = rows[0];
 
   if (skill_ids !== undefined) {
-    db.prepare('DELETE FROM project_skills WHERE project_id = ?').run(id);
-    const insertSkill = db.prepare('INSERT OR IGNORE INTO project_skills (project_id, skill_id, effort_days) VALUES (?, ?, ?)');
+    await pool.query('DELETE FROM project_skills WHERE project_id = $1', [id]);
     for (const s of skill_ids) {
-      insertSkill.run(id, s.id, s.effort_days || null);
+      await pool.query(
+        'INSERT INTO project_skills (project_id, skill_id, effort_days) VALUES ($1,$2,$3) ON CONFLICT DO NOTHING',
+        [id, s.id, s.effort_days || null]
+      );
     }
   }
 
-  const project = db.prepare('SELECT * FROM projects WHERE id = ?').get(id);
-  const skills = db.prepare(`
+  const { rows: skills } = await pool.query(`
     SELECT s.id, s.name, ps.effort_days FROM project_skills ps
-    JOIN skills s ON s.id = ps.skill_id WHERE ps.project_id = ? ORDER BY s.name
-  `).all(id);
-  const assignments = db.prepare(`
-    SELECT a.*, e.name as engineer_name, e.portfolio, e.role
+    JOIN skills s ON s.id = ps.skill_id WHERE ps.project_id = $1 ORDER BY s.name
+  `, [id]);
+  const { rows: assignments } = await pool.query(`
+    SELECT a.*, e.name AS engineer_name, e.portfolio, e.role
     FROM assignments a JOIN engineers e ON e.id = a.engineer_id
-    WHERE a.project_id = ? ORDER BY e.name
-  `).all(id);
+    WHERE a.project_id = $1 ORDER BY e.name
+  `, [id]);
   res.json({ ...project, skills, assignments });
 });
 
 // DELETE /api/projects/:id
-router.delete('/:id', (req, res) => {
+router.delete('/:id', async (req, res) => {
   const { id } = req.params;
-  const existing = db.prepare('SELECT * FROM projects WHERE id = ?').get(id);
-  if (!existing) return res.status(404).json({ error: 'Not found' });
-  db.prepare('DELETE FROM projects WHERE id = ?').run(id);
+  const { rows: existing } = await pool.query('SELECT * FROM projects WHERE id = $1', [id]);
+  if (!existing.length) return res.status(404).json({ error: 'Not found' });
+  await pool.query('DELETE FROM projects WHERE id = $1', [id]);
   res.json({ success: true });
 });
 
