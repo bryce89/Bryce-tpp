@@ -164,7 +164,7 @@ export default function TimelineView() {
                 onClick={() => setMode(m)}
                 style={{
                   background: mode === m ? T.accent : 'transparent',
-                  color: mode === m ? '#0a0f0a' : T.muted,
+                  color: mode === m ? '#090e1a' : T.muted,
                   border: 'none',
                   padding: '7px 14px',
                   fontFamily: T.mono,

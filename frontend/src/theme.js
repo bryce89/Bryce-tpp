@@ -1,12 +1,12 @@
 export const T = {
-  bg: '#0a0f0a',
-  card: '#0f1a0f',
-  cardHover: '#142014',
-  border: '#1e3020',
-  borderHover: '#2d4a30',
-  text: '#d4e8d4',
-  muted: '#5a7a5a',
-  accent: '#4ade80',
+  bg: '#090e1a',
+  card: '#0d1829',
+  cardHover: '#111f36',
+  border: '#1a2840',
+  borderHover: '#1e3a5f',
+  text: '#d4e4f8',
+  muted: '#4a6a8a',
+  accent: '#60a5fa',
   blue: '#60a5fa',
   purple: '#a78bfa',
   orange: '#fb923c',
@@ -16,7 +16,7 @@ export const T = {
 };
 
 export const PROJECT_COLORS = [
-  '#4ade80','#60a5fa','#a78bfa','#fb923c',
-  '#f472b6','#34d399','#fbbf24','#f87171',
-  '#38bdf8','#c084fc','#fb7185','#a3e635',
+  '#60a5fa','#a78bfa','#fb923c','#f472b6',
+  '#38bdf8','#fbbf24','#f87171','#34d399',
+  '#818cf8','#c084fc','#fb7185','#67e8f9',
 ];

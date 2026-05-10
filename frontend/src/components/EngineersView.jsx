@@ -68,7 +68,7 @@ export default function EngineersView() {
           onClick={() => navigate('/engineers/new')}
           style={{
             background: T.accent,
-            color: '#0a0f0a',
+            color: '#090e1a',
             border: 'none',
             borderRadius: 6,
             padding: '9px 18px',
