@@ -85,6 +85,10 @@ export default function SkillsView() {
   const engineerCountForSkill = (skillId) =>
     engineers.filter(e => e.skills?.some(s => s.id === skillId)).length;
 
+  const sortedSkills = [...skills].sort((a, b) =>
+    engineerCountForSkill(b.id) - engineerCountForSkill(a.id)
+  );
+
   const handleAdd = async (e) => {
     e.preventDefault();
     const name = newSkill.trim();
@@ -202,7 +206,7 @@ export default function SkillsView() {
               </tr>
             </thead>
             <tbody>
-              {skills.map(skill => {
+              {sortedSkills.map(skill => {
                 const count = engineerCountForSkill(skill.id);
                 const isConfirming = deleteConfirm === skill.id;
                 const isEditing = editingId === skill.id;
