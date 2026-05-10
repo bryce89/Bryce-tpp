@@ -76,7 +76,7 @@ function AllocationPopup({ popup, onClose, projectColorMap }) {
 
 export default function TimelineView() {
   const navigate = useNavigate();
-  const [mode, setMode] = useState('project');
+  const [mode, setMode] = useState('skills');
   const [allProjects, setAllProjects] = useState([]);
   const [year, setYear] = useState(2026);
   const [assignments, setAssignments] = useState([]);
@@ -313,12 +313,12 @@ export default function TimelineView() {
         <h1 style={{ fontFamily: T.serif, fontSize: 28, color: T.text, fontWeight: 600 }}>Timeline</h1>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
           <div style={{ display: 'flex', background: T.card, border: `1px solid ${T.border}`, borderRadius: 6, overflow: 'hidden' }}>
-            {[['engineer', 'By Engineer'], ['project', 'By Project'], ['skills', 'Project Skills']].map(([m, label]) => (
+            {[['skills', 'Project Skills'], ['project', 'By Project'], ['engineer', 'By Engineer']].map(([m, label]) => (
               <button key={m} onClick={() => setMode(m)} style={{
                 background: mode === m ? T.accent : 'transparent',
                 color: mode === m ? '#ffffff' : T.muted,
                 border: 'none',
-                borderLeft: m !== 'engineer' ? `1px solid ${T.border}` : 'none',
+                borderLeft: m !== 'skills' ? `1px solid ${T.border}` : 'none',
                 padding: '7px 14px',
                 fontFamily: T.mono,
                 fontSize: 12,
