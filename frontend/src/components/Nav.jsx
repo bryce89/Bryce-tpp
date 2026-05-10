@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { T } from '../theme.js';
 
 const links = [
-  { to: '/timeline', label: 'Allocation', icon: '📅' },
+  { to: '/allocation', label: 'Allocation', icon: '📅' },
   { to: '/engineers', label: 'Engineers', icon: '👥' },
   { to: '/projects', label: 'Projects', icon: '📋' },
   { to: '/skills', label: 'Skills', icon: '🔧' },

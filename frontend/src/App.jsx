@@ -39,7 +39,7 @@ export default function App() {
           width: isMobile ? '100%' : 'auto',
         }}>
           <Routes>
-            <Route path="/" element={<Navigate to="/timeline" replace />} />
+            <Route path="/" element={<Navigate to="/allocation" replace />} />
             <Route path="/engineers" element={<EngineersView />} />
             <Route path="/engineers/new" element={<EngineerForm />} />
             <Route path="/engineers/:id" element={<EngineerDetail />} />
@@ -48,7 +48,7 @@ export default function App() {
             <Route path="/projects/new" element={<ProjectForm />} />
             <Route path="/projects/:id" element={<ProjectDetail />} />
             <Route path="/projects/:id/edit" element={<ProjectForm />} />
-            <Route path="/timeline" element={<TimelineView />} />
+            <Route path="/allocation" element={<TimelineView />} />
             <Route path="/skills" element={<SkillsView />} />
             <Route path="/about" element={<AboutView />} />
           </Routes>
