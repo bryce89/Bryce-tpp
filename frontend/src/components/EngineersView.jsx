@@ -1,7 +1,47 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { T } from '../theme.js';
+
+function useTooltip() {
+  const [tooltip, setTooltip] = useState({ visible: false, content: null, x: 0, y: 0 });
+
+  const show = (e, content) => {
+    if (!content) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    setTooltip({ visible: true, content, x: rect.left, y: rect.bottom + 6 });
+  };
+
+  const hide = () => setTooltip(t => ({ ...t, visible: false }));
+
+  return { tooltip, show, hide };
+}
+
+function TooltipPortal({ tooltip }) {
+  if (!tooltip.visible || !tooltip.content) return null;
+  return (
+    <div style={{
+      position: 'fixed',
+      left: tooltip.x,
+      top: tooltip.y,
+      zIndex: 9999,
+      background: T.text,
+      color: T.card,
+      padding: '8px 12px',
+      borderRadius: 7,
+      fontSize: 12,
+      fontFamily: T.mono,
+      maxWidth: 340,
+      lineHeight: 1.5,
+      boxShadow: '0 6px 20px rgba(0,0,0,0.15)',
+      pointerEvents: 'none',
+      whiteSpace: 'pre-wrap',
+      wordBreak: 'break-word',
+    }}>
+      {tooltip.content}
+    </div>
+  );
+}
 
 function SkillTag({ name }) {
   return (
@@ -23,6 +63,7 @@ export default function EngineersView() {
   const [skills, setSkills] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({ search: '', portfolio: '', capability: '', skill: '' });
+  const { tooltip, show, hide } = useTooltip();
 
   const portfolios = [...new Set(engineers.map(e => e.portfolio).filter(Boolean))].sort();
   const capabilities = [...new Set(engineers.map(e => e.capability).filter(Boolean))].sort();
@@ -81,6 +122,8 @@ export default function EngineersView() {
 
   return (
     <div>
+      <TooltipPortal tooltip={tooltip} />
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
         <div>
           <h1 style={{ fontFamily: T.serif, fontSize: 28, color: T.text, fontWeight: 600 }}>Engineers</h1>
@@ -148,35 +191,59 @@ export default function EngineersView() {
               </tr>
             </thead>
             <tbody>
-              {engineers.map((eng, i) => (
+              {engineers.map(eng => (
                 <tr
                   key={eng.id}
                   onClick={() => navigate(`/engineers/${eng.id}`)}
                   style={{ cursor: 'pointer', transition: 'background 0.1s' }}
                   onMouseEnter={e => e.currentTarget.style.background = T.cardHover}
-                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; hide(); }}
                 >
-                  <td style={{ ...tdStyle, fontWeight: 600, color: T.accent, whiteSpace: 'nowrap' }}>
+                  <td
+                    style={{ ...tdStyle, fontWeight: 600, color: T.accent, whiteSpace: 'nowrap' }}
+                    onMouseEnter={e => show(e, `${eng.name}${eng.email ? '\n' + eng.email : ''}`)}
+                    onMouseLeave={hide}
+                  >
                     {eng.name}
                   </td>
-                  <td style={{ ...tdStyle, color: T.muted, whiteSpace: 'nowrap' }}>
+                  <td
+                    style={{ ...tdStyle, color: T.muted, whiteSpace: 'nowrap' }}
+                    onMouseEnter={e => show(e, eng.portfolio || null)}
+                    onMouseLeave={hide}
+                  >
                     {eng.portfolio || '—'}
                   </td>
-                  <td style={{ ...tdStyle, whiteSpace: 'nowrap' }}>
+                  <td
+                    style={{ ...tdStyle, whiteSpace: 'nowrap' }}
+                    onMouseEnter={e => show(e, eng.capability || null)}
+                    onMouseLeave={hide}
+                  >
                     {eng.capability || '—'}
                   </td>
-                  <td style={{ ...tdStyle, color: T.muted, fontSize: 12, maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <td
+                    style={{ ...tdStyle, color: T.muted, fontSize: 12, maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                    onMouseEnter={e => show(e, eng.role_description || null)}
+                    onMouseLeave={hide}
+                  >
                     {eng.role_description || '—'}
                   </td>
-                  <td style={tdStyle}>
+                  <td
+                    style={tdStyle}
+                    onMouseEnter={e => eng.skills?.length > 4 && show(e, (eng.skills || []).map(s => s.name).join(', '))}
+                    onMouseLeave={hide}
+                  >
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                       {(eng.skills || []).slice(0, 4).map(s => <SkillTag key={s.id} name={s.name} />)}
                       {eng.skills?.length > 4 && (
-                        <span style={{ fontSize: 11, color: T.muted, alignSelf: 'center' }}>+{eng.skills.length - 4}</span>
+                        <span style={{ fontSize: 11, color: T.muted, alignSelf: 'center' }}>+{eng.skills.length - 4} more</span>
                       )}
                     </div>
                   </td>
-                  <td style={{ ...tdStyle, textAlign: 'right', whiteSpace: 'nowrap' }}>
+                  <td
+                    style={{ ...tdStyle, textAlign: 'right', whiteSpace: 'nowrap' }}
+                    onMouseEnter={e => eng.total_allocation_pct > 0 && show(e, `${eng.total_allocation_pct}% allocated across ${eng.project_count} project${eng.project_count !== 1 ? 's' : ''}`)}
+                    onMouseLeave={hide}
+                  >
                     {eng.total_allocation_pct > 0 ? (
                       <span style={{
                         background: eng.total_allocation_pct > 100 ? `${T.red}18` : `${T.accent}18`,
