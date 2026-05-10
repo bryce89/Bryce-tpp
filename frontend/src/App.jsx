@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { T } from './theme.js';
 import Nav from './components/Nav.jsx';
@@ -11,11 +11,31 @@ import ProjectForm from './components/ProjectForm.jsx';
 import TimelineView from './components/TimelineView.jsx';
 
 export default function App() {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const handler = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (!mobile) setMenuOpen(false);
+    };
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
+
   return (
     <BrowserRouter>
       <div style={{ display: 'flex', minHeight: '100vh', background: T.bg }}>
-        <Nav />
-        <main style={{ flex: 1, marginLeft: 240, padding: '24px 28px', overflowY: 'auto', minHeight: '100vh' }}>
+        <Nav isMobile={isMobile} menuOpen={menuOpen} onToggle={() => setMenuOpen(o => !o)} onClose={() => setMenuOpen(false)} />
+        <main style={{
+          flex: 1,
+          marginLeft: isMobile ? 0 : 240,
+          padding: isMobile ? '72px 16px 24px' : '24px 28px',
+          overflowY: 'auto',
+          minHeight: '100vh',
+          width: isMobile ? '100%' : 'auto',
+        }}>
           <Routes>
             <Route path="/" element={<Navigate to="/engineers" replace />} />
             <Route path="/engineers" element={<EngineersView />} />
