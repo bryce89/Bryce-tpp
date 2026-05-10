@@ -7,6 +7,7 @@ const links = [
   { to: '/engineers', label: 'Engineers', icon: '👥' },
   { to: '/projects', label: 'Projects', icon: '📋' },
   { to: '/skills', label: 'Skills', icon: '🔧' },
+  { to: '/about', label: 'About this tool', icon: 'ℹ️' },
 ];
 
 export default function Nav({ isMobile, menuOpen, onToggle, onClose }) {

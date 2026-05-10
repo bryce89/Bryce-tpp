@@ -10,6 +10,7 @@ import ProjectDetail from './components/ProjectDetail.jsx';
 import ProjectForm from './components/ProjectForm.jsx';
 import TimelineView from './components/TimelineView.jsx';
 import SkillsView from './components/SkillsView.jsx';
+import AboutView from './components/AboutView.jsx';
 
 export default function App() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -49,6 +50,7 @@ export default function App() {
             <Route path="/projects/:id/edit" element={<ProjectForm />} />
             <Route path="/timeline" element={<TimelineView />} />
             <Route path="/skills" element={<SkillsView />} />
+            <Route path="/about" element={<AboutView />} />
           </Routes>
         </main>
       </div>
