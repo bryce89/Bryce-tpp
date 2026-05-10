@@ -79,7 +79,7 @@ export default function EngineerDetail() {
   });
 
   return (
-    <div style={{ maxWidth: 900 }}>
+    <div style={{ maxWidth: "100%" }}>
       <Link to="/engineers" style={{ color: T.muted, fontFamily: T.mono, fontSize: 12, textDecoration: 'none', display: 'inline-block', marginBottom: 20 }}>
         ← Back to Engineers
       </Link>

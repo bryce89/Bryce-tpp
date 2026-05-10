@@ -94,7 +94,7 @@ export default function EngineerForm() {
   if (loading) return <div style={{ color: T.muted, fontFamily: T.mono }}>Loading...</div>;
 
   return (
-    <div style={{ maxWidth: 600 }}>
+    <div style={{ maxWidth: 860 }}>
       <h1 style={{ fontFamily: T.serif, fontSize: 26, color: T.text, fontWeight: 600, marginBottom: 24 }}>
         {isEdit ? 'Edit Engineer' : 'New Engineer'}
       </h1>

@@ -15,7 +15,7 @@ export default function App() {
     <BrowserRouter>
       <div style={{ display: 'flex', minHeight: '100vh', background: T.bg }}>
         <Nav />
-        <main style={{ flex: 1, marginLeft: 240, padding: '32px', overflowY: 'auto', minHeight: '100vh' }}>
+        <main style={{ flex: 1, marginLeft: 240, padding: '24px 28px', overflowY: 'auto', minHeight: '100vh' }}>
           <Routes>
             <Route path="/" element={<Navigate to="/engineers" replace />} />
             <Route path="/engineers" element={<EngineersView />} />
