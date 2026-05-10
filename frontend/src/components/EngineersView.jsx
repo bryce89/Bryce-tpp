@@ -6,8 +6,8 @@ import { T } from '../theme.js';
 function SkillTag({ name }) {
   return (
     <span style={{
-      background: 'rgba(74,222,128,0.1)',
-      border: `1px solid rgba(74,222,128,0.25)`,
+      background: `${T.accent}18`,
+      border: `1px solid ${T.accent}44`,
       color: T.accent,
       borderRadius: 4,
       padding: '2px 7px',
@@ -57,6 +57,28 @@ export default function EngineersView() {
     outline: 'none',
   };
 
+  const thStyle = {
+    padding: '10px 14px',
+    textAlign: 'left',
+    fontSize: 11,
+    color: T.muted,
+    fontFamily: T.mono,
+    fontWeight: 500,
+    borderBottom: `1px solid ${T.border}`,
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+    whiteSpace: 'nowrap',
+  };
+
+  const tdStyle = {
+    padding: '12px 14px',
+    borderBottom: `1px solid ${T.border}`,
+    fontFamily: T.mono,
+    fontSize: 13,
+    color: T.text,
+    verticalAlign: 'middle',
+  };
+
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
@@ -81,12 +103,12 @@ export default function EngineersView() {
       </div>
 
       {/* Filter bar */}
-      <div style={{ display: 'flex', gap: 10, marginBottom: 24, flexWrap: 'wrap', alignItems: 'center' }}>
+      <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap', alignItems: 'center' }}>
         <input
-          placeholder="Search name, email, portfolio..."
+          placeholder="Search name, email..."
           value={filters.search}
           onChange={e => setFilters(f => ({ ...f, search: e.target.value }))}
-          style={{ ...inputStyle, width: 220 }}
+          style={{ ...inputStyle, width: 200 }}
         />
         <select value={filters.portfolio} onChange={e => setFilters(f => ({ ...f, portfolio: e.target.value }))} style={inputStyle}>
           <option value="">All portfolios</option>
@@ -113,36 +135,67 @@ export default function EngineersView() {
       ) : engineers.length === 0 ? (
         <div style={{ color: T.muted, fontFamily: T.mono, fontSize: 13 }}>No engineers found.</div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
-          {engineers.map(eng => (
-            <div
-              key={eng.id}
-              onClick={() => navigate(`/engineers/${eng.id}`)}
-              style={{
-                background: T.card,
-                border: `1px solid ${T.border}`,
-                borderRadius: 8,
-                padding: 20,
-                cursor: 'pointer',
-                transition: 'border-color 0.15s, background 0.15s',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = T.borderHover; e.currentTarget.style.background = T.cardHover; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = T.border; e.currentTarget.style.background = T.card; }}
-            >
-              <div style={{ fontFamily: T.serif, fontSize: 18, color: T.text, fontWeight: 600, marginBottom: 4 }}>{eng.name}</div>
-              <div style={{ fontSize: 12, color: T.muted, fontFamily: T.mono, marginBottom: 2 }}>{eng.portfolio || '—'}</div>
-              <div style={{ fontSize: 12, color: T.accent, fontFamily: T.mono, marginBottom: 12 }}>{eng.capability || '—'}</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 12 }}>
-                {(eng.skills || []).slice(0, 5).map(s => <SkillTag key={s.id} name={s.name} />)}
-                {eng.skills?.length > 5 && <span style={{ fontSize: 11, color: T.muted }}>+{eng.skills.length - 5} more</span>}
-              </div>
-              <div style={{ fontSize: 11, color: T.muted, fontFamily: T.mono, borderTop: `1px solid ${T.border}`, paddingTop: 10 }}>
-                {eng.project_count > 0
-                  ? `On ${eng.project_count} project${eng.project_count !== 1 ? 's' : ''} · ${eng.total_allocation_pct}% allocated`
-                  : 'No active assignments'}
-              </div>
-            </div>
-          ))}
+        <div style={{ overflowX: 'auto', background: T.card, border: `1px solid ${T.border}`, borderRadius: 10 }}>
+          <table style={{ borderCollapse: 'collapse', width: '100%' }}>
+            <thead>
+              <tr>
+                <th style={thStyle}>Name</th>
+                <th style={thStyle}>Portfolio</th>
+                <th style={thStyle}>Capability</th>
+                <th style={thStyle}>Role Description</th>
+                <th style={thStyle}>Skills</th>
+                <th style={{ ...thStyle, textAlign: 'right' }}>Allocation</th>
+              </tr>
+            </thead>
+            <tbody>
+              {engineers.map((eng, i) => (
+                <tr
+                  key={eng.id}
+                  onClick={() => navigate(`/engineers/${eng.id}`)}
+                  style={{ cursor: 'pointer', transition: 'background 0.1s' }}
+                  onMouseEnter={e => e.currentTarget.style.background = T.cardHover}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >
+                  <td style={{ ...tdStyle, fontWeight: 600, color: T.accent, whiteSpace: 'nowrap' }}>
+                    {eng.name}
+                  </td>
+                  <td style={{ ...tdStyle, color: T.muted, whiteSpace: 'nowrap' }}>
+                    {eng.portfolio || '—'}
+                  </td>
+                  <td style={{ ...tdStyle, whiteSpace: 'nowrap' }}>
+                    {eng.capability || '—'}
+                  </td>
+                  <td style={{ ...tdStyle, color: T.muted, fontSize: 12, maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {eng.role_description || '—'}
+                  </td>
+                  <td style={tdStyle}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                      {(eng.skills || []).slice(0, 4).map(s => <SkillTag key={s.id} name={s.name} />)}
+                      {eng.skills?.length > 4 && (
+                        <span style={{ fontSize: 11, color: T.muted, alignSelf: 'center' }}>+{eng.skills.length - 4}</span>
+                      )}
+                    </div>
+                  </td>
+                  <td style={{ ...tdStyle, textAlign: 'right', whiteSpace: 'nowrap' }}>
+                    {eng.total_allocation_pct > 0 ? (
+                      <span style={{
+                        background: eng.total_allocation_pct > 100 ? `${T.red}18` : `${T.accent}18`,
+                        border: `1px solid ${eng.total_allocation_pct > 100 ? T.red : T.accent}44`,
+                        color: eng.total_allocation_pct > 100 ? T.red : T.accent,
+                        borderRadius: 4,
+                        padding: '2px 8px',
+                        fontSize: 12,
+                      }}>
+                        {eng.total_allocation_pct}%
+                      </span>
+                    ) : (
+                      <span style={{ color: T.muted, fontSize: 12 }}>Unassigned</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
