@@ -222,6 +222,9 @@ export default function SkillsView() {
                         />
                       ) : (
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <span style={{ fontSize: 20, color: T.muted, fontFamily: T.mono, cursor: 'pointer' }}
+                            onClick={() => { setEditingId(skill.id); setDeleteConfirm(null); }}
+                          >✎</span>
                           <span
                             onClick={() => { setEditingId(skill.id); setDeleteConfirm(null); }}
                             title="Click to edit"
@@ -241,7 +244,6 @@ export default function SkillsView() {
                           >
                             {skill.name}
                           </span>
-                          <span style={{ fontSize: 15, color: T.muted, fontFamily: T.mono }}>✎</span>
                         </div>
                       )}
                     </td>
