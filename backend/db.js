@@ -8,7 +8,7 @@ const pool = process.env.DATABASE_URL
   : new Pool({
       host: 'localhost',
       port: 5432,
-      database: 'project_mapper'
+      database: process.env.PGDATABASE || 'project_mapper'
     });
 
 async function initDB() {
