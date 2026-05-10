@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { T, PROJECT_COLORS } from '../theme.js';
 
@@ -14,6 +15,7 @@ function monthOverlap(startDate, endDate, year, monthIdx) {
 }
 
 export default function TimelineView() {
+  const navigate = useNavigate();
   const [mode, setMode] = useState('engineer'); // 'engineer' | 'project'
   const [year, setYear] = useState(2026);
   const [assignments, setAssignments] = useState([]);
@@ -212,7 +214,12 @@ export default function TimelineView() {
                   ) : (
                     engineerRows.map(eng => (
                       <tr key={eng.id}>
-                        <td style={rowLabelStyle}>
+                        <td
+                          style={{ ...rowLabelStyle, cursor: 'pointer' }}
+                          onClick={() => navigate(`/engineers/${eng.id}`)}
+                          onMouseEnter={e => e.currentTarget.style.color = T.accent}
+                          onMouseLeave={e => e.currentTarget.style.color = T.text}
+                        >
                           <div style={{ fontWeight: 500 }}>{eng.name}</div>
                           <div style={{ fontSize: 10, color: T.muted, marginTop: 1 }}>{eng.capability}</div>
                         </td>
