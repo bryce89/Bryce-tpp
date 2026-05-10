@@ -2,12 +2,15 @@ import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { T } from '../theme.js';
 
+const isLocalhost = typeof window !== 'undefined' &&
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
 const links = [
   { to: '/allocation', label: 'Allocation', icon: '📅' },
   { to: '/engineers', label: 'Engineers', icon: '👥' },
   { to: '/projects', label: 'Projects', icon: '📋' },
   { to: '/skills', label: 'Skills', icon: '🔧' },
-  { to: '/tests', label: 'Tests', icon: '🧪' },
+  ...(isLocalhost ? [{ to: '/tests', label: 'Tests', icon: '🧪' }] : []),
   { to: '/about', label: 'About this tool', icon: 'ℹ️' },
 ];
 
