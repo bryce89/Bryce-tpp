@@ -6,6 +6,7 @@ const links = [
   { to: '/timeline', label: 'Timeline', icon: '📅' },
   { to: '/engineers', label: 'Engineers', icon: '👥' },
   { to: '/projects', label: 'Projects', icon: '📋' },
+  { to: '/skills', label: 'Skills', icon: '🔧' },
 ];
 
 export default function Nav({ isMobile, menuOpen, onToggle, onClose }) {
