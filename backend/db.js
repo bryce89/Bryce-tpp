@@ -18,7 +18,7 @@ db.exec(`
     name TEXT NOT NULL,
     email TEXT,
     portfolio TEXT,
-    capability TEXT,
+    role TEXT,
     role_description TEXT,
     created_at TEXT DEFAULT (datetime('now'))
   );
@@ -85,7 +85,7 @@ if (engineerCount.c === 0) {
 
   // Insert engineers
   const insertEngineer = db.prepare(`
-    INSERT INTO engineers (name, email, portfolio, capability, role_description)
+    INSERT INTO engineers (name, email, portfolio, role, role_description)
     VALUES (?, ?, ?, ?, ?)
   `);
   const insertEngineerSkill = db.prepare('INSERT INTO engineer_skills (engineer_id, skill_id) VALUES (?, ?)');
@@ -95,7 +95,7 @@ if (engineerCount.c === 0) {
       name: 'Priya Sharma',
       email: 'priya.sharma@example.com',
       portfolio: 'Payments',
-      capability: 'Principal Engineer',
+      role: 'Principal Engineer',
       role_description: 'Leads architectural decisions for the payments platform. Deep expertise in distributed systems, event-driven design, and financial compliance requirements.',
       skills: ['Java', 'Spring Boot', 'Kubernetes', 'AWS', 'SQL']
     },
@@ -103,7 +103,7 @@ if (engineerCount.c === 0) {
       name: 'Marcus Chen',
       email: 'marcus.chen@example.com',
       portfolio: 'Platform',
-      capability: 'Lead Engineer',
+      role: 'Lead Engineer',
       role_description: 'Owns the internal developer platform. Focuses on CI/CD tooling, infrastructure automation, and developer experience improvements.',
       skills: ['Go', 'Terraform', 'Kubernetes', 'Docker', 'AWS']
     },
@@ -111,7 +111,7 @@ if (engineerCount.c === 0) {
       name: 'Aisha Okonkwo',
       email: 'aisha.okonkwo@example.com',
       portfolio: 'Data',
-      capability: 'Senior Engineer',
+      role: 'Senior Engineer',
       role_description: 'Specialises in large-scale data pipelines and analytics infrastructure. Proficient in Python-based ML workflows and SQL query optimisation.',
       skills: ['Python', 'SQL', 'AWS', 'Docker', 'TypeScript']
     },
@@ -119,7 +119,7 @@ if (engineerCount.c === 0) {
       name: 'Tom Bellingham',
       email: 'tom.bellingham@example.com',
       portfolio: 'Payments',
-      capability: 'Senior Engineer',
+      role: 'Senior Engineer',
       role_description: 'Full-stack engineer with a strong focus on web performance and API design. Comfortable across the React/Node.js stack and backend service development.',
       skills: ['JavaScript', 'TypeScript', 'React', 'Node.js', 'SQL']
     },
@@ -127,7 +127,7 @@ if (engineerCount.c === 0) {
       name: 'Sofia Reyes',
       email: 'sofia.reyes@example.com',
       portfolio: 'Platform',
-      capability: 'Lead Engineer',
+      role: 'Lead Engineer',
       role_description: 'Infrastructure and security lead. Drives platform reliability initiatives and is the primary owner of the Kubernetes cluster strategy.',
       skills: ['Rust', 'C++', 'Kubernetes', 'Docker', 'Terraform', 'AWS']
     }
@@ -135,7 +135,7 @@ if (engineerCount.c === 0) {
 
   const engineerIds = [];
   for (const eng of engineers) {
-    const result = insertEngineer.run(eng.name, eng.email, eng.portfolio, eng.capability, eng.role_description);
+    const result = insertEngineer.run(eng.name, eng.email, eng.portfolio, eng.role, eng.role_description);
     const engId = result.lastInsertRowid;
     engineerIds.push(engId);
     for (const skillName of eng.skills) {

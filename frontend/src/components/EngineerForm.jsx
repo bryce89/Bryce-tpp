@@ -9,7 +9,7 @@ export default function EngineerForm() {
   const isEdit = Boolean(id);
 
   const [form, setForm] = useState({
-    name: '', email: '', portfolio: '', capability: '', role_description: '', skill_ids: [],
+    name: '', email: '', portfolio: '', role: '', role_description: '', skill_ids: [],
   });
   const [skills, setSkills] = useState([]);
   const [newSkillName, setNewSkillName] = useState('');
@@ -26,7 +26,7 @@ export default function EngineerForm() {
             name: eng.name || '',
             email: eng.email || '',
             portfolio: eng.portfolio || '',
-            capability: eng.capability || '',
+            role: eng.role || '',
             role_description: eng.role_description || '',
             skill_ids: eng.skills.map(s => s.id),
           });
@@ -117,8 +117,8 @@ export default function EngineerForm() {
               <input style={inputStyle} value={form.portfolio} onChange={e => setForm(f => ({ ...f, portfolio: e.target.value }))} placeholder="e.g. Payments, Platform" />
             </div>
             <div>
-              <label style={labelStyle}>Capability</label>
-              <input style={inputStyle} value={form.capability} onChange={e => setForm(f => ({ ...f, capability: e.target.value }))} placeholder="e.g. Senior Engineer" />
+              <label style={labelStyle}>Role</label>
+              <input style={inputStyle} value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))} placeholder="e.g. Senior Engineer" />
             </div>
           </div>
           <div>

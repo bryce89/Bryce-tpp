@@ -323,7 +323,7 @@ export default function TimelineView() {
                           onMouseEnter={e => e.currentTarget.style.color = T.accent}
                           onMouseLeave={e => e.currentTarget.style.color = T.text}>
                           <div style={{ fontWeight: 500 }}>{eng.name}</div>
-                          <div style={{ fontSize: 10, color: T.muted, marginTop: 1 }}>{eng.capability}</div>
+                          <div style={{ fontSize: 10, color: T.muted, marginTop: 1 }}>{eng.role}</div>
                         </td>
                         {eng.months.map((m, mi) => renderEngineerCell(m, eng, mi))}
                       </tr>

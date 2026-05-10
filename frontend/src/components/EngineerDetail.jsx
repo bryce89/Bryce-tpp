@@ -94,9 +94,9 @@ export default function EngineerDetail() {
                   Portfolio: <span style={{ color: T.text }}>{engineer.portfolio}</span>
                 </span>
               )}
-              {engineer.capability && (
+              {engineer.role && (
                 <span style={{ fontSize: 13, color: T.muted, fontFamily: T.mono }}>
-                  Capability: <span style={{ color: T.accent }}>{engineer.capability}</span>
+                  Role: <span style={{ color: T.accent }}>{engineer.role}</span>
                 </span>
               )}
               {engineer.email && (

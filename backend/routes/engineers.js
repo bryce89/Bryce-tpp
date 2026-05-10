@@ -39,7 +39,7 @@ function attachAllocationSummary(engineers) {
 
 // GET /api/engineers
 router.get('/', (req, res) => {
-  const { skill, portfolio, capability, search } = req.query;
+  const { skill, portfolio, role, search } = req.query;
 
   let query = `SELECT DISTINCT e.* FROM engineers e`;
   const params = [];
@@ -55,9 +55,9 @@ router.get('/', (req, res) => {
     conditions.push(`e.portfolio = ?`);
     params.push(portfolio);
   }
-  if (capability) {
-    conditions.push(`e.capability = ?`);
-    params.push(capability);
+  if (role) {
+    conditions.push(`e.role = ?`);
+    params.push(role);
   }
   if (search) {
     conditions.push(`(e.name LIKE ? OR e.email LIKE ? OR e.portfolio LIKE ?)`);
@@ -91,13 +91,13 @@ router.get('/:id', (req, res) => {
 
 // POST /api/engineers
 router.post('/', (req, res) => {
-  const { name, email, portfolio, capability, role_description, skill_ids = [] } = req.body;
+  const { name, email, portfolio, role, role_description, skill_ids = [] } = req.body;
   if (!name || !name.trim()) return res.status(400).json({ error: 'name is required' });
 
   const result = db.prepare(`
-    INSERT INTO engineers (name, email, portfolio, capability, role_description)
+    INSERT INTO engineers (name, email, portfolio, role, role_description)
     VALUES (?, ?, ?, ?, ?)
-  `).run(name.trim(), email || null, portfolio || null, capability || null, role_description || null);
+  `).run(name.trim(), email || null, portfolio || null, role || null, role_description || null);
 
   const id = result.lastInsertRowid;
   const insertSkill = db.prepare('INSERT OR IGNORE INTO engineer_skills (engineer_id, skill_id) VALUES (?, ?)');
@@ -117,7 +117,7 @@ router.put('/:id', (req, res) => {
   const existing = db.prepare('SELECT * FROM engineers WHERE id = ?').get(id);
   if (!existing) return res.status(404).json({ error: 'Not found' });
 
-  const { name, email, portfolio, capability, role_description, skill_ids } = req.body;
+  const { name, email, portfolio, role, role_description, skill_ids } = req.body;
   if (name !== undefined && !name.trim()) return res.status(400).json({ error: 'name cannot be empty' });
 
   db.prepare(`
@@ -125,14 +125,14 @@ router.put('/:id', (req, res) => {
       name = COALESCE(?, name),
       email = ?,
       portfolio = ?,
-      capability = ?,
+      role = ?,
       role_description = ?
     WHERE id = ?
   `).run(
     name ? name.trim() : null,
     email !== undefined ? (email || null) : existing.email,
     portfolio !== undefined ? (portfolio || null) : existing.portfolio,
-    capability !== undefined ? (capability || null) : existing.capability,
+    role !== undefined ? (role || null) : existing.role,
     role_description !== undefined ? (role_description || null) : existing.role_description,
     id
   );

@@ -113,7 +113,7 @@ export default function AssignmentModal({ prefilledEngineerId, prefilledProjectI
               style={{ ...inputStyle, opacity: prefilledEngineerId ? 0.7 : 1 }}
             >
               <option value="">Select engineer...</option>
-              {engineers.map(e => <option key={e.id} value={e.id}>{e.name} ({e.capability || e.portfolio || '—'})</option>)}
+              {engineers.map(e => <option key={e.id} value={e.id}>{e.name} ({e.role || e.portfolio || '—'})</option>)}
             </select>
           </div>
 

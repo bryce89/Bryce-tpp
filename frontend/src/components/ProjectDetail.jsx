@@ -144,7 +144,7 @@ export default function ProjectDetail() {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: T.mono, fontSize: 13 }}>
             <thead>
               <tr style={{ borderBottom: `1px solid ${T.border}` }}>
-                {['Engineer', 'Portfolio', 'Capability', 'Allocation', 'Start', 'End', ''].map(h => (
+                {['Engineer', 'Portfolio', 'Role', 'Allocation', 'Start', 'End', ''].map(h => (
                   <th key={h} style={{ textAlign: 'left', padding: '6px 10px', color: T.muted, fontWeight: 400, fontSize: 11 }}>{h}</th>
                 ))}
               </tr>
@@ -154,7 +154,7 @@ export default function ProjectDetail() {
                 <tr key={a.id} style={{ borderBottom: `1px solid ${T.border}` }}>
                   <td style={{ padding: '10px 10px', color: T.text, fontWeight: 500 }}>{a.engineer_name}</td>
                   <td style={{ padding: '10px 10px', color: T.muted }}>{a.portfolio || '—'}</td>
-                  <td style={{ padding: '10px 10px', color: T.muted }}>{a.capability || '—'}</td>
+                  <td style={{ padding: '10px 10px', color: T.muted }}>{a.role || '—'}</td>
                   <td style={{ padding: '10px 10px' }}>
                     <span style={{
                       color: a.allocation_pct === 100 ? T.accent : T.orange,

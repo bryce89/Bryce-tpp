@@ -62,11 +62,11 @@ export default function EngineersView() {
   const [engineers, setEngineers] = useState([]);
   const [skills, setSkills] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({ search: '', portfolio: '', capability: '', skill: '' });
+  const [filters, setFilters] = useState({ search: '', portfolio: '', role: '', skill: '' });
   const { tooltip, show, hide } = useTooltip();
 
   const portfolios = [...new Set(engineers.map(e => e.portfolio).filter(Boolean))].sort();
-  const capabilities = [...new Set(engineers.map(e => e.capability).filter(Boolean))].sort();
+  const roles = [...new Set(engineers.map(e => e.role).filter(Boolean))].sort();
 
   useEffect(() => {
     api.getSkills().then(setSkills).catch(console.error);
@@ -77,7 +77,7 @@ export default function EngineersView() {
     const params = {};
     if (filters.search) params.search = filters.search;
     if (filters.portfolio) params.portfolio = filters.portfolio;
-    if (filters.capability) params.capability = filters.capability;
+    if (filters.role) params.role = filters.role;
     if (filters.skill) params.skill = filters.skill;
     api.getEngineers(params)
       .then(setEngineers)
@@ -85,7 +85,7 @@ export default function EngineersView() {
       .finally(() => setLoading(false));
   }, [filters]);
 
-  const hasFilters = filters.search || filters.portfolio || filters.capability || filters.skill;
+  const hasFilters = filters.search || filters.portfolio || filters.role || filters.skill;
 
   const inputStyle = {
     background: T.card,
@@ -157,9 +157,9 @@ export default function EngineersView() {
           <option value="">All portfolios</option>
           {portfolios.map(p => <option key={p} value={p}>{p}</option>)}
         </select>
-        <select value={filters.capability} onChange={e => setFilters(f => ({ ...f, capability: e.target.value }))} style={inputStyle}>
-          <option value="">All capabilities</option>
-          {capabilities.map(c => <option key={c} value={c}>{c}</option>)}
+        <select value={filters.role} onChange={e => setFilters(f => ({ ...f, role: e.target.value }))} style={inputStyle}>
+          <option value="">All roles</option>
+          {roles.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
         <select value={filters.skill} onChange={e => setFilters(f => ({ ...f, skill: e.target.value }))} style={inputStyle}>
           <option value="">All skills</option>
@@ -167,7 +167,7 @@ export default function EngineersView() {
         </select>
         {hasFilters && (
           <button
-            onClick={() => setFilters({ search: '', portfolio: '', capability: '', skill: '' })}
+            onClick={() => setFilters({ search: '', portfolio: '', role: '', skill: '' })}
             style={{ background: 'transparent', border: `1px solid ${T.border}`, color: T.muted, borderRadius: 6, padding: '7px 12px', fontFamily: T.mono, fontSize: 12, cursor: 'pointer' }}
           >Clear filters</button>
         )}
@@ -184,7 +184,7 @@ export default function EngineersView() {
               <tr>
                 <th style={thStyle}>Name</th>
                 <th style={thStyle}>Portfolio</th>
-                <th style={thStyle}>Capability</th>
+                <th style={thStyle}>Role</th>
                 <th style={thStyle}>Role Description</th>
                 <th style={thStyle}>Skills</th>
                 <th style={{ ...thStyle, textAlign: 'right' }}>Allocation</th>
@@ -215,10 +215,10 @@ export default function EngineersView() {
                   </td>
                   <td
                     style={{ ...tdStyle, whiteSpace: 'nowrap' }}
-                    onMouseEnter={e => show(e, eng.capability || null)}
+                    onMouseEnter={e => show(e, eng.role || null)}
                     onMouseLeave={hide}
                   >
-                    {eng.capability || '—'}
+                    {eng.role || '—'}
                   </td>
                   <td
                     style={{ ...tdStyle, color: T.muted, fontSize: 12, maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}

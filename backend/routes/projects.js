@@ -61,7 +61,7 @@ router.get('/:id', (req, res) => {
   `).all(req.params.id);
 
   const assignments = db.prepare(`
-    SELECT a.*, e.name as engineer_name, e.portfolio, e.capability
+    SELECT a.*, e.name as engineer_name, e.portfolio, e.role
     FROM assignments a
     JOIN engineers e ON e.id = a.engineer_id
     WHERE a.project_id = ?
@@ -135,7 +135,7 @@ router.put('/:id', (req, res) => {
     JOIN skills s ON s.id = ps.skill_id WHERE ps.project_id = ? ORDER BY s.name
   `).all(id);
   const assignments = db.prepare(`
-    SELECT a.*, e.name as engineer_name, e.portfolio, e.capability
+    SELECT a.*, e.name as engineer_name, e.portfolio, e.role
     FROM assignments a JOIN engineers e ON e.id = a.engineer_id
     WHERE a.project_id = ? ORDER BY e.name
   `).all(id);
