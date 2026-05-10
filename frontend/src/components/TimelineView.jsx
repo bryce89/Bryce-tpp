@@ -84,6 +84,7 @@ export default function TimelineView() {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedProjects, setExpandedProjects] = useState(new Set());
+  const [expandedSkillProjects, setExpandedSkillProjects] = useState(new Set());
   const [popup, setPopup] = useState({ visible: false, x: 0, y: 0, hits: [], total: 0, label: '', month: '', year: 2026 });
 
   useEffect(() => {
@@ -98,6 +99,7 @@ export default function TimelineView() {
       setProjects(projs);
       setAllProjects(projs);
       setExpandedProjects(new Set(projs.map(p => p.id)));
+      setExpandedSkillProjects(new Set(projs.map(p => p.id)));
     }).catch(console.error).finally(() => setLoading(false));
   }, [year]);
 
@@ -128,22 +130,13 @@ export default function TimelineView() {
     }).filter(eng => eng.months.some(m => m.hits.length > 0));
   }, [engineers, assignments, year]);
 
-  const skillsMatrix = useMemo(() => {
-    const skillMap = {};
-    allProjects.forEach(proj => {
-      (proj.skills || []).forEach(s => {
-        if (!skillMap[s.id]) skillMap[s.id] = { id: s.id, name: s.name, totalDays: 0 };
-        skillMap[s.id].totalDays += s.effort_days || 0;
-      });
-    });
-    const uniqueSkills = Object.values(skillMap).sort((a, b) => b.totalDays - a.totalDays || a.name.localeCompare(b.name));
-    const rows = allProjects.map(proj => {
-      const skillDays = {};
-      (proj.skills || []).forEach(s => { skillDays[s.id] = s.effort_days; });
-      return { ...proj, skillDays };
-    });
-    return { skills: uniqueSkills, rows };
-  }, [allProjects]);
+  const skillsRows = useMemo(() => {
+    return allProjects.map(proj => {
+      const activeMonths = MONTHS.map((_, mi) => monthOverlap(proj.start_date, proj.end_date, year, mi));
+      const skillSubRows = (proj.skills || []).map(s => ({ ...s, activeMonths }));
+      return { ...proj, activeMonths, skillSubRows };
+    }).filter(proj => proj.activeMonths.some(Boolean));
+  }, [allProjects, year]);
 
   const projectRows = useMemo(() => {
     return projects.map(proj => {
@@ -324,68 +317,113 @@ export default function TimelineView() {
             <table style={{ borderCollapse: 'collapse', width: '100%' }}>
               <thead>
                 <tr>
-                  <th style={{ ...headerCellStyle, textAlign: 'left', padding: '10px 14px', minWidth: 180 }}>Project</th>
-                  <th style={{ ...headerCellStyle, textAlign: 'right', padding: '10px 14px', minWidth: 80, whiteSpace: 'nowrap' }}>Total Days</th>
-                  {skillsMatrix.skills.map(s => (
-                    <th key={s.id} style={{ ...headerCellStyle, minWidth: 64, padding: '10px 6px' }}>{s.name}</th>
-                  ))}
+                  <th style={{ ...headerCellStyle, textAlign: 'left', padding: '6px 12px', minWidth: 160 }}>Project / Skill</th>
+                  {MONTHS.map(m => <th key={m} style={headerCellStyle}>{m}</th>)}
                 </tr>
               </thead>
               <tbody>
-                {skillsMatrix.rows.length === 0 ? (
-                  <tr><td colSpan={skillsMatrix.skills.length + 2} style={{ padding: 20, textAlign: 'center', color: T.muted, fontFamily: T.mono, fontSize: 13 }}>No projects with skills defined</td></tr>
-                ) : skillsMatrix.rows.map(proj => {
+                {skillsRows.length === 0 ? (
+                  <tr><td colSpan={13} style={{ padding: 20, textAlign: 'center', color: T.muted, fontFamily: T.mono, fontSize: 13 }}>No projects active in {year}</td></tr>
+                ) : skillsRows.map(proj => {
                   const color = projectColorMap[proj.id];
+                  const isExpanded = expandedSkillProjects.has(proj.id);
                   return (
-                    <tr key={proj.id}
-                      onMouseEnter={e => e.currentTarget.style.background = T.cardHover}
-                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                    >
-                      <td style={{ ...rowLabelStyle, maxWidth: 220 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <div style={{ width: 8, height: 8, borderRadius: '50%', background: color, flexShrink: 0 }} />
-                          <span style={{ fontWeight: 600, color: T.text, overflow: 'hidden', textOverflow: 'ellipsis' }}>{proj.name}</span>
-                        </div>
-                        {proj.start_date && proj.end_date && (
-                          <div style={{ fontSize: 10, color: T.muted, marginTop: 2, paddingLeft: 16 }}>
-                            {proj.start_date} → {proj.end_date}
+                    <React.Fragment key={proj.id}>
+                      {/* Project header row */}
+                      <tr style={{ background: `${color}0a` }}>
+                        <td
+                          style={{ ...rowLabelStyle, cursor: 'pointer', background: `${color}0a` }}
+                          onClick={() => setExpandedSkillProjects(prev => {
+                            const next = new Set(prev);
+                            next.has(proj.id) ? next.delete(proj.id) : next.add(proj.id);
+                            return next;
+                          })}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ fontSize: 10, color: color, fontWeight: 700, width: 10, flexShrink: 0 }}>
+                              {isExpanded ? '▼' : '▶'}
+                            </span>
+                            <div style={{ width: 8, height: 8, borderRadius: '50%', background: color, flexShrink: 0 }} />
+                            <span style={{ fontWeight: 600, color: T.text, overflow: 'hidden', textOverflow: 'ellipsis' }}>{proj.name}</span>
                           </div>
-                        )}
-                      </td>
-                      <td style={{ padding: '8px 14px', borderBottom: `1px solid ${T.border}`, fontFamily: T.mono, fontSize: 12, color: T.muted, textAlign: 'right', whiteSpace: 'nowrap' }}>
-                        {proj.total_effort_days != null ? `${proj.total_effort_days}d` : '—'}
-                      </td>
-                      {skillsMatrix.skills.map(s => {
-                        const days = proj.skillDays[s.id];
-                        return (
-                          <td key={s.id} style={{ padding: '4px 4px', borderBottom: `1px solid ${T.border}`, minWidth: 64, textAlign: 'center' }}>
-                            {days != null ? (
+                          <div style={{ fontSize: 10, color: T.muted, marginTop: 2, paddingLeft: 26 }}>
+                            {proj.skillSubRows.length} skill{proj.skillSubRows.length !== 1 ? 's' : ''}
+                          </div>
+                        </td>
+                        {proj.activeMonths.map((active, mi) => (
+                          <td key={mi} style={{ padding: '6px 4px', borderBottom: `1px solid ${T.border}`, minWidth: 52, background: active ? `${color}08` : 'transparent' }}>
+                            {active && (
                               <div style={{
-                                background: `${color}18`,
+                                background: `${color}22`,
                                 border: `1px solid ${color}44`,
                                 borderRadius: 4,
-                                padding: '3px 6px',
-                                display: 'inline-block',
+                                padding: '3px 4px',
+                                textAlign: 'center',
+                                fontSize: 10,
                                 fontFamily: T.mono,
-                                fontSize: 11,
                                 color: color,
                                 fontWeight: 500,
-                                whiteSpace: 'nowrap',
-                              }}>{days}d</div>
-                            ) : (
-                              <span style={{ color: T.border, fontSize: 11, fontFamily: T.mono }}>—</span>
+                              }}>
+                                {proj.skillSubRows.length}🔧
+                              </div>
                             )}
                           </td>
-                        );
-                      })}
-                    </tr>
+                        ))}
+                      </tr>
+
+                      {/* Skill sub-rows */}
+                      {isExpanded && proj.skillSubRows.map(skill => (
+                        <tr key={`${proj.id}-${skill.id}`}>
+                          <td style={{ ...rowLabelStyle, paddingLeft: 36, background: 'inherit' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <div style={{ width: 1, height: 14, background: color, opacity: 0.4, flexShrink: 0 }} />
+                              <span style={{ fontSize: 12, color: T.muted }}>{skill.name}</span>
+                              {skill.effort_days != null && (
+                                <span style={{ fontSize: 10, color: color, fontFamily: T.mono, marginLeft: 2 }}>{skill.effort_days}d</span>
+                              )}
+                            </div>
+                          </td>
+                          {skill.activeMonths.map((active, mi) => (
+                            <td key={mi} style={{ padding: active ? '4px' : '6px 4px', borderBottom: `1px solid ${T.border}`, minWidth: 52, background: T.bg }}>
+                              {active && skill.effort_days != null && (
+                                <div style={{
+                                  background: `${color}18`,
+                                  border: `1px solid ${color}44`,
+                                  borderRadius: 4,
+                                  padding: '3px 4px',
+                                  textAlign: 'center',
+                                  fontSize: 10,
+                                  fontFamily: T.mono,
+                                  color: color,
+                                }}>
+                                  {skill.effort_days}d
+                                </div>
+                              )}
+                              {active && skill.effort_days == null && (
+                                <div style={{
+                                  background: `${color}18`,
+                                  border: `1px solid ${color}44`,
+                                  borderRadius: 4,
+                                  padding: '3px 4px',
+                                  textAlign: 'center',
+                                  fontSize: 10,
+                                  fontFamily: T.mono,
+                                  color: color,
+                                }}>✓</div>
+                              )}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </React.Fragment>
                   );
                 })}
               </tbody>
             </table>
           </div>
           <div style={{ marginTop: 16, display: 'flex', gap: 20, flexWrap: 'wrap', fontFamily: T.mono, fontSize: 11, color: T.muted }}>
-            <div>Skills columns ordered by total effort days across all projects</div>
+            <div>Click a project row to expand / collapse</div>
+            <div>Effort days shown per skill across active months</div>
             {allProjects.map(p => (
               <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <div style={{ width: 10, height: 10, borderRadius: '50%', background: projectColorMap[p.id] }} />
