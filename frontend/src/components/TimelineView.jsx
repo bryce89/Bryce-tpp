@@ -26,91 +26,49 @@ function AllocationPopup({ popup, onClose, projectColorMap }) {
   }, [onClose]);
 
   if (!popup.visible) return null;
-
-  const isEngineerMode = popup.mode === 'engineer';
   const isOver = popup.total > 100;
 
   return (
-    <div
-      ref={ref}
-      style={{
-        position: 'fixed',
-        left: popup.x,
-        top: popup.y,
-        zIndex: 9999,
-        background: T.card,
-        border: `1px solid ${T.border}`,
-        borderRadius: 10,
-        boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-        minWidth: 240,
-        maxWidth: 320,
-        overflow: 'hidden',
-      }}
-    >
-      {/* Header */}
-      <div style={{
-        padding: '10px 14px',
-        borderBottom: `1px solid ${T.border}`,
-        background: T.bg,
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-      }}>
+    <div ref={ref} style={{
+      position: 'fixed',
+      left: popup.x,
+      top: popup.y,
+      zIndex: 9999,
+      background: T.card,
+      border: `1px solid ${T.border}`,
+      borderRadius: 10,
+      boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+      minWidth: 240,
+      maxWidth: 320,
+      overflow: 'hidden',
+    }}>
+      <div style={{ padding: '10px 14px', borderBottom: `1px solid ${T.border}`, background: T.bg, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <div style={{ fontFamily: T.mono, fontSize: 11, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{popup.month} {popup.year}</div>
           <div style={{ fontFamily: T.serif, fontSize: 14, fontWeight: 600, color: T.text, marginTop: 2 }}>{popup.label}</div>
         </div>
         <button onClick={onClose} style={{ background: 'none', border: 'none', color: T.muted, cursor: 'pointer', fontSize: 16, lineHeight: 1 }}>✕</button>
       </div>
-
-      {/* Rows */}
       <div style={{ padding: '8px 0' }}>
         {popup.hits.map((h, i) => (
           <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 14px', gap: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden' }}>
-              {isEngineerMode
-                ? <div style={{ width: 8, height: 8, borderRadius: '50%', background: projectColorMap[h.project_id], flexShrink: 0 }} />
-                : <div style={{ width: 8, height: 8, borderRadius: '50%', background: T.blue, flexShrink: 0 }} />
-              }
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: projectColorMap[h.project_id], flexShrink: 0 }} />
               <span style={{ fontFamily: T.mono, fontSize: 12, color: T.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {isEngineerMode ? h.project_name : h.engineer_name}
+                {h.project_name}
               </span>
             </div>
-            <span style={{
-              fontFamily: T.mono,
-              fontSize: 12,
-              fontWeight: 600,
-              color: isEngineerMode ? projectColorMap[h.project_id] : T.blue,
-              flexShrink: 0,
-            }}>
+            <span style={{ fontFamily: T.mono, fontSize: 12, fontWeight: 600, color: projectColorMap[h.project_id], flexShrink: 0 }}>
               {h.allocation_pct}%
             </span>
           </div>
         ))}
       </div>
-
-      {/* Footer */}
-      <div style={{
-        padding: '8px 14px',
-        borderTop: `1px solid ${T.border}`,
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        background: T.bg,
-      }}>
-        {isEngineerMode ? (
-          <>
-            <span style={{ fontFamily: T.mono, fontSize: 11, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total</span>
-            <span style={{ fontFamily: T.mono, fontSize: 13, fontWeight: 700, color: isOver ? T.red : T.accent }}>
-              {popup.total}% {isOver && '⚠ over'}
-            </span>
-          </>
-        ) : (
-          <>
-            <span style={{ fontFamily: T.mono, fontSize: 11, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Engineers</span>
-            <span style={{ fontFamily: T.mono, fontSize: 13, fontWeight: 700, color: T.blue }}>{popup.hits.length}</span>
-          </>
-        )}
+      <div style={{ padding: '8px 14px', borderTop: `1px solid ${T.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: T.bg }}>
+        <span style={{ fontFamily: T.mono, fontSize: 11, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total</span>
+        <span style={{ fontFamily: T.mono, fontSize: 13, fontWeight: 700, color: isOver ? T.red : T.accent }}>
+          {popup.total}% {isOver && '⚠ over'}
+        </span>
       </div>
     </div>
   );
@@ -124,7 +82,8 @@ export default function TimelineView() {
   const [engineers, setEngineers] = useState([]);
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [popup, setPopup] = useState({ visible: false, x: 0, y: 0, hits: [], total: 0, label: '', month: '', year: 2026, mode: 'engineer' });
+  const [expandedProjects, setExpandedProjects] = useState(new Set());
+  const [popup, setPopup] = useState({ visible: false, x: 0, y: 0, hits: [], total: 0, label: '', month: '', year: 2026 });
 
   useEffect(() => {
     setLoading(true);
@@ -136,8 +95,18 @@ export default function TimelineView() {
       setAssignments(asgns);
       setEngineers(engs);
       setProjects(projs);
+      // Default all projects to expanded
+      setExpandedProjects(new Set(projs.map(p => p.id)));
     }).catch(console.error).finally(() => setLoading(false));
   }, [year]);
+
+  const toggleProject = (id) => {
+    setExpandedProjects(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
 
   const projectColorMap = useMemo(() => {
     const map = {};
@@ -160,14 +129,29 @@ export default function TimelineView() {
 
   const projectRows = useMemo(() => {
     return projects.map(proj => {
+      const projAssignments = assignments.filter(a => a.project_id === proj.id);
+
+      // Summary months (for the project header row)
       const months = MONTHS.map((_, mi) => {
-        const hits = assignments.filter(a =>
-          a.project_id === proj.id && monthOverlap(a.start_date, a.end_date, year, mi)
-        );
+        const hits = projAssignments.filter(a => monthOverlap(a.start_date, a.end_date, year, mi));
         const total = hits.reduce((sum, a) => sum + a.allocation_pct, 0);
         return { hits, total };
       });
-      return { ...proj, months };
+
+      // Engineer sub-rows
+      const engineerIds = [...new Set(projAssignments.map(a => a.engineer_id))];
+      const engineerSubRows = engineerIds.map(engId => {
+        const engAssignments = projAssignments.filter(a => a.engineer_id === engId);
+        const engName = engAssignments[0]?.engineer_name || '';
+        const engMonths = MONTHS.map((_, mi) => {
+          const hits = engAssignments.filter(a => monthOverlap(a.start_date, a.end_date, year, mi));
+          const total = hits.reduce((sum, a) => sum + a.allocation_pct, 0);
+          return { hits, total };
+        });
+        return { engineer_id: engId, engineer_name: engName, months: engMonths };
+      });
+
+      return { ...proj, months, engineerSubRows };
     }).filter(proj => proj.months.some(m => m.hits.length > 0));
   }, [projects, assignments, year]);
 
@@ -194,12 +178,12 @@ export default function TimelineView() {
     textOverflow: 'ellipsis',
   };
 
-  function openPopup(e, monthData, label, monthIdx, mode) {
+  function openPopup(e, monthData, label, monthIdx) {
     if (!monthData.hits.length) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const x = Math.min(rect.left, window.innerWidth - 340);
     const y = rect.bottom + 6;
-    setPopup({ visible: true, x, y, hits: monthData.hits, total: monthData.total, label, month: MONTHS[monthIdx], year, mode });
+    setPopup({ visible: true, x, y, hits: monthData.hits, total: monthData.total, label, month: MONTHS[monthIdx], year });
   }
 
   function renderEngineerCell(monthData, eng, mi) {
@@ -207,7 +191,6 @@ export default function TimelineView() {
     if (!hits.length) return (
       <td key={mi} style={{ padding: '6px 4px', borderBottom: `1px solid ${T.border}`, minWidth: 52 }} />
     );
-
     const isOver = total > 100;
     const bg = isOver ? 'rgba(248,113,113,0.15)' : hits.length === 1
       ? `${projectColorMap[hits[0].project_id]}22`
@@ -216,11 +199,8 @@ export default function TimelineView() {
     const borderColor = isOver ? T.red : hits.length === 1 ? projectColorMap[hits[0].project_id] : T.accent;
 
     return (
-      <td
-        key={mi}
-        style={{ padding: '4px', borderBottom: `1px solid ${T.border}`, minWidth: 52, cursor: 'pointer' }}
-        onClick={(e) => openPopup(e, monthData, eng.name, mi, 'engineer')}
-      >
+      <td key={mi} style={{ padding: '4px', borderBottom: `1px solid ${T.border}`, minWidth: 52, cursor: 'pointer' }}
+        onClick={(e) => openPopup(e, monthData, eng.name, mi)}>
         <div style={{
           background: bg,
           border: `1px solid ${borderColor}44`,
@@ -242,34 +222,48 @@ export default function TimelineView() {
     );
   }
 
-  function renderProjectCell(monthData, mi, projName) {
-    const { hits, total } = monthData;
+  function renderProjectSummaryCell(monthData, mi, color) {
+    const { hits } = monthData;
     if (!hits.length) return (
-      <td key={mi} style={{ padding: '6px 4px', borderBottom: `1px solid ${T.border}`, minWidth: 52 }} />
+      <td key={mi} style={{ padding: '6px 4px', borderBottom: `1px solid ${T.border}`, minWidth: 52, background: `${color}08` }} />
     );
-    const intensity = Math.min(total / 300, 1);
-    const bg = `rgba(96,165,250,${0.05 + intensity * 0.25})`;
     return (
-      <td
-        key={mi}
-        style={{ padding: '4px', borderBottom: `1px solid ${T.border}`, minWidth: 52, cursor: 'pointer' }}
-        onClick={(e) => openPopup(e, monthData, projName, mi, 'project')}
-      >
+      <td key={mi} style={{ padding: '4px', borderBottom: `1px solid ${T.border}`, minWidth: 52, background: `${color}08` }}>
         <div style={{
-          background: bg,
-          border: `1px solid rgba(96,165,250,${0.2 + intensity * 0.3})`,
+          background: `${color}22`,
+          border: `1px solid ${color}44`,
           borderRadius: 4,
           padding: '3px 4px',
           textAlign: 'center',
           fontSize: 10,
           fontFamily: T.mono,
-          color: T.blue,
-          transition: 'filter 0.1s',
-        }}
-          onMouseEnter={e => e.currentTarget.style.filter = 'brightness(0.9)'}
-          onMouseLeave={e => e.currentTarget.style.filter = 'none'}
-        >
+          color: color,
+          fontWeight: 500,
+        }}>
           {hits.length}👤
+        </div>
+      </td>
+    );
+  }
+
+  function renderEngineerSubCell(monthData, mi, color) {
+    const { total } = monthData;
+    if (!total) return (
+      <td key={mi} style={{ padding: '6px 4px', borderBottom: `1px solid ${T.border}`, minWidth: 52, background: T.bg }} />
+    );
+    return (
+      <td key={mi} style={{ padding: '4px', borderBottom: `1px solid ${T.border}`, minWidth: 52, background: T.bg }}>
+        <div style={{
+          background: `${color}18`,
+          border: `1px solid ${color}44`,
+          borderRadius: 4,
+          padding: '3px 4px',
+          textAlign: 'center',
+          fontSize: 10,
+          fontFamily: T.mono,
+          color: color,
+        }}>
+          {total}%
         </div>
       </td>
     );
@@ -281,37 +275,24 @@ export default function TimelineView() {
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
         <h1 style={{ fontFamily: T.serif, fontSize: 28, color: T.text, fontWeight: 600 }}>Timeline</h1>
-
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
           <div style={{ display: 'flex', background: T.card, border: `1px solid ${T.border}`, borderRadius: 6, overflow: 'hidden' }}>
             {['engineer', 'project'].map(m => (
-              <button
-                key={m}
-                onClick={() => setMode(m)}
-                style={{
-                  background: mode === m ? T.accent : 'transparent',
-                  color: mode === m ? '#ffffff' : T.muted,
-                  border: 'none',
-                  padding: '7px 14px',
-                  fontFamily: T.mono,
-                  fontSize: 12,
-                  cursor: 'pointer',
-                  textTransform: 'capitalize',
-                }}
-              >{m === 'engineer' ? 'By Engineer' : 'By Project'}</button>
+              <button key={m} onClick={() => setMode(m)} style={{
+                background: mode === m ? T.accent : 'transparent',
+                color: mode === m ? '#ffffff' : T.muted,
+                border: 'none',
+                padding: '7px 14px',
+                fontFamily: T.mono,
+                fontSize: 12,
+                cursor: 'pointer',
+              }}>{m === 'engineer' ? 'By Engineer' : 'By Project'}</button>
             ))}
           </div>
-
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <button
-              onClick={() => setYear(y => y - 1)}
-              style={{ background: T.card, border: `1px solid ${T.border}`, color: T.text, borderRadius: 6, padding: '7px 12px', fontFamily: T.mono, fontSize: 13, cursor: 'pointer' }}
-            >←</button>
+            <button onClick={() => setYear(y => y - 1)} style={{ background: T.card, border: `1px solid ${T.border}`, color: T.text, borderRadius: 6, padding: '7px 12px', fontFamily: T.mono, fontSize: 13, cursor: 'pointer' }}>←</button>
             <span style={{ fontFamily: T.mono, fontSize: 14, color: T.text, minWidth: 40, textAlign: 'center' }}>{year}</span>
-            <button
-              onClick={() => setYear(y => y + 1)}
-              style={{ background: T.card, border: `1px solid ${T.border}`, color: T.text, borderRadius: 6, padding: '7px 12px', fontFamily: T.mono, fontSize: 13, cursor: 'pointer' }}
-            >→</button>
+            <button onClick={() => setYear(y => y + 1)} style={{ background: T.card, border: `1px solid ${T.border}`, color: T.text, borderRadius: 6, padding: '7px 12px', fontFamily: T.mono, fontSize: 13, cursor: 'pointer' }}>→</button>
           </div>
         </div>
       </div>
@@ -325,7 +306,7 @@ export default function TimelineView() {
               <thead>
                 <tr>
                   <th style={{ ...headerCellStyle, textAlign: 'left', padding: '6px 12px', minWidth: 160 }}>
-                    {mode === 'engineer' ? 'Engineer' : 'Project'}
+                    {mode === 'engineer' ? 'Engineer' : 'Project / Engineer'}
                   </th>
                   {MONTHS.map(m => <th key={m} style={headerCellStyle}>{m}</th>)}
                 </tr>
@@ -337,12 +318,10 @@ export default function TimelineView() {
                   ) : (
                     engineerRows.map(eng => (
                       <tr key={eng.id}>
-                        <td
-                          style={{ ...rowLabelStyle, cursor: 'pointer' }}
+                        <td style={{ ...rowLabelStyle, cursor: 'pointer' }}
                           onClick={() => navigate(`/engineers/${eng.id}`)}
                           onMouseEnter={e => e.currentTarget.style.color = T.accent}
-                          onMouseLeave={e => e.currentTarget.style.color = T.text}
-                        >
+                          onMouseLeave={e => e.currentTarget.style.color = T.text}>
                           <div style={{ fontWeight: 500 }}>{eng.name}</div>
                           <div style={{ fontSize: 10, color: T.muted, marginTop: 1 }}>{eng.capability}</div>
                         </td>
@@ -354,17 +333,51 @@ export default function TimelineView() {
                   projectRows.length === 0 ? (
                     <tr><td colSpan={13} style={{ padding: 20, textAlign: 'center', color: T.muted, fontFamily: T.mono, fontSize: 13 }}>No assignments in {year}</td></tr>
                   ) : (
-                    projectRows.map((proj, idx) => (
-                      <tr key={proj.id}>
-                        <td style={rowLabelStyle}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <div style={{ width: 8, height: 8, borderRadius: '50%', background: projectColorMap[proj.id], flexShrink: 0 }} />
-                            <span style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis' }}>{proj.name}</span>
-                          </div>
-                        </td>
-                        {proj.months.map((m, mi) => renderProjectCell(m, mi, proj.name))}
-                      </tr>
-                    ))
+                    projectRows.map(proj => {
+                      const color = projectColorMap[proj.id];
+                      const isExpanded = expandedProjects.has(proj.id);
+                      return (
+                        <React.Fragment key={proj.id}>
+                          {/* Project header row */}
+                          <tr style={{ background: `${color}0a` }}>
+                            <td
+                              style={{ ...rowLabelStyle, cursor: 'pointer', background: `${color}0a` }}
+                              onClick={() => toggleProject(proj.id)}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <span style={{ fontSize: 10, color: color, fontWeight: 700, width: 10, flexShrink: 0 }}>
+                                  {isExpanded ? '▼' : '▶'}
+                                </span>
+                                <div style={{ width: 8, height: 8, borderRadius: '50%', background: color, flexShrink: 0 }} />
+                                <span style={{ fontWeight: 600, color: T.text, overflow: 'hidden', textOverflow: 'ellipsis' }}>{proj.name}</span>
+                              </div>
+                              <div style={{ fontSize: 10, color: T.muted, marginTop: 2, paddingLeft: 26 }}>
+                                {proj.engineerSubRows.length} engineer{proj.engineerSubRows.length !== 1 ? 's' : ''}
+                              </div>
+                            </td>
+                            {proj.months.map((m, mi) => renderProjectSummaryCell(m, mi, color))}
+                          </tr>
+
+                          {/* Engineer sub-rows */}
+                          {isExpanded && proj.engineerSubRows.map(eng => (
+                            <tr key={`${proj.id}-${eng.engineer_id}`}
+                              style={{ cursor: 'pointer' }}
+                              onClick={() => navigate(`/engineers/${eng.engineer_id}`)}
+                              onMouseEnter={e => e.currentTarget.style.background = T.cardHover}
+                              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                            >
+                              <td style={{ ...rowLabelStyle, paddingLeft: 36, background: 'inherit' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                  <div style={{ width: 1, height: 14, background: color, opacity: 0.4, flexShrink: 0 }} />
+                                  <span style={{ fontSize: 12, color: T.muted }}>{eng.engineer_name}</span>
+                                </div>
+                              </td>
+                              {eng.months.map((m, mi) => renderEngineerSubCell(m, mi, color))}
+                            </tr>
+                          ))}
+                        </React.Fragment>
+                      );
+                    })
                   )
                 )}
               </tbody>
@@ -379,23 +392,16 @@ export default function TimelineView() {
                   Single project
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <div style={{ width: 24, height: 12, background: `${T.accent}18`, border: `1px solid ${T.accent}44`, borderRadius: 2 }} />
-                  Multiple projects
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <div style={{ width: 24, height: 12, background: 'rgba(248,113,113,0.15)', border: `1px solid ${T.red}`, borderRadius: 2 }} />
                   Over-allocated (&gt;100%)
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  Click any cell to see project breakdown
-                </div>
+                <div>Click any cell to see project breakdown</div>
               </>
             ) : (
               <>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  Cell shows engineer count for that month
-                </div>
-                {projects.map((p) => (
+                <div>Click a project row to expand / collapse</div>
+                <div>Click an engineer name to open their profile</div>
+                {projects.map(p => (
                   <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <div style={{ width: 10, height: 10, borderRadius: '50%', background: projectColorMap[p.id] }} />
                     {p.name}
