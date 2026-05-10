@@ -37,7 +37,7 @@ export default function App() {
           width: isMobile ? '100%' : 'auto',
         }}>
           <Routes>
-            <Route path="/" element={<Navigate to="/engineers" replace />} />
+            <Route path="/" element={<Navigate to="/timeline" replace />} />
             <Route path="/engineers" element={<EngineersView />} />
             <Route path="/engineers/new" element={<EngineerForm />} />
             <Route path="/engineers/:id" element={<EngineerDetail />} />
