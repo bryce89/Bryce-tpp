@@ -74,10 +74,13 @@ export default function SkillsView() {
 
   const load = () => {
     setLoading(true);
-    Promise.all([api.getSkills(), api.getEngineers()])
-      .then(([s, e]) => { setSkills(s); setEngineers(e); })
-      .catch(console.error)
-      .finally(() => setLoading(false));
+    Promise.all([
+      api.getSkills().catch(() => []),
+      api.getEngineers().catch(() => []),
+    ]).then(([s, e]) => {
+      setSkills(s);
+      setEngineers(e);
+    }).finally(() => setLoading(false));
   };
 
   useEffect(() => { load(); }, []);
