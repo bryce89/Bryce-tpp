@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 
 // Future RBAC middleware stub:
 // const rbac = require('./middleware/rbac');
@@ -21,7 +22,12 @@ app.use('/api/assignments', require('./routes/assignments'));
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
-const PORT = 3001;
+// Serve built React frontend in production
+const distPath = path.join(__dirname, '../frontend/dist');
+app.use(express.static(distPath));
+app.get('*', (req, res) => res.sendFile(path.join(distPath, 'index.html')));
+
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-  console.log(`Project Mapper backend running on http://localhost:${PORT}`);
+  console.log(`Project Mapper running on http://localhost:${PORT}`);
 });
