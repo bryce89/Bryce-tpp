@@ -321,29 +321,30 @@ export default function TimelineView() {
     <div>
       <AllocationPopup popup={popup} onClose={() => setPopup(p => ({ ...p, visible: false }))} projectColorMap={projectColorMap} />
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
         <h1 style={{ fontFamily: T.serif, fontSize: 28, color: T.text, fontWeight: 600 }}>Timeline</h1>
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          <div style={{ display: 'flex', background: T.card, border: `1px solid ${T.border}`, borderRadius: 6, overflow: 'hidden' }}>
-            {[['skills', 'Project Skills'], ['project', 'By Project'], ['engineer', 'By Engineer']].map(([m, label]) => (
-              <button key={m} onClick={() => setMode(m)} style={{
-                background: mode === m ? T.accent : 'transparent',
-                color: mode === m ? '#ffffff' : T.muted,
-                border: 'none',
-                borderLeft: m !== 'skills' ? `1px solid ${T.border}` : 'none',
-                padding: '7px 14px',
-                fontFamily: T.mono,
-                fontSize: 12,
-                cursor: 'pointer',
-              }}>{label}</button>
-            ))}
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <button onClick={() => setYear(y => y - 1)} style={{ background: T.card, border: `1px solid ${T.border}`, color: T.text, borderRadius: 6, padding: '7px 12px', fontFamily: T.mono, fontSize: 13, cursor: 'pointer' }}>←</button>
-            <span style={{ fontFamily: T.mono, fontSize: 14, color: T.text, minWidth: 40, textAlign: 'center' }}>{year}</span>
-            <button onClick={() => setYear(y => y + 1)} style={{ background: T.card, border: `1px solid ${T.border}`, color: T.text, borderRadius: 6, padding: '7px 12px', fontFamily: T.mono, fontSize: 13, cursor: 'pointer' }}>→</button>
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <button onClick={() => setYear(y => y - 1)} style={{ background: T.card, border: `1px solid ${T.border}`, color: T.text, borderRadius: 6, padding: '7px 12px', fontFamily: T.mono, fontSize: 13, cursor: 'pointer' }}>←</button>
+          <span style={{ fontFamily: T.mono, fontSize: 14, color: T.text, minWidth: 40, textAlign: 'center' }}>{year}</span>
+          <button onClick={() => setYear(y => y + 1)} style={{ background: T.card, border: `1px solid ${T.border}`, color: T.text, borderRadius: 6, padding: '7px 12px', fontFamily: T.mono, fontSize: 13, cursor: 'pointer' }}>→</button>
         </div>
+      </div>
+
+      <div style={{ display: 'flex', gap: 4, marginBottom: 20, borderBottom: `2px solid ${T.border}`, paddingBottom: 0 }}>
+        {[['skills', 'Project Skills'], ['project', 'By Project'], ['engineer', 'By Engineer']].map(([m, label]) => (
+          <button key={m} onClick={() => setMode(m)} style={{
+            background: 'transparent',
+            color: mode === m ? T.accent : T.muted,
+            border: 'none',
+            borderBottom: mode === m ? `2px solid ${T.accent}` : '2px solid transparent',
+            marginBottom: -2,
+            padding: '8px 18px',
+            fontFamily: T.mono,
+            fontSize: 13,
+            fontWeight: mode === m ? 600 : 400,
+            cursor: 'pointer',
+          }}>{label}</button>
+        ))}
       </div>
 
       {!loading && (
