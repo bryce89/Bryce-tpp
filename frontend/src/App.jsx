@@ -11,6 +11,7 @@ import ProjectForm from './components/ProjectForm.jsx';
 import TimelineView from './components/TimelineView.jsx';
 import SkillsView from './components/SkillsView.jsx';
 import AboutView from './components/AboutView.jsx';
+import TestsView from './components/TestsView.jsx';
 
 export default function App() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -51,6 +52,7 @@ export default function App() {
             <Route path="/allocation" element={<TimelineView />} />
             <Route path="/skills" element={<SkillsView />} />
             <Route path="/about" element={<AboutView />} />
+            <Route path="/tests" element={<TestsView />} />
           </Routes>
         </main>
       </div>
