@@ -132,11 +132,31 @@ export default function TimelineView() {
 
   const skillsRows = useMemo(() => {
     return allProjects.map(proj => {
+      const projAssignments = assignments.filter(a => a.project_id === proj.id);
       const activeMonths = MONTHS.map((_, mi) => monthOverlap(proj.start_date, proj.end_date, year, mi));
-      const skillSubRows = (proj.skills || []).map(s => ({ ...s, activeMonths }));
-      return { ...proj, activeMonths, skillSubRows };
+
+      const skillSubRows = (proj.skills || []).map(s => {
+        const monthCoverage = MONTHS.map((_, mi) => {
+          if (!activeMonths[mi]) return null;
+          const assignedEngineers = projAssignments
+            .filter(a => monthOverlap(a.start_date, a.end_date, year, mi))
+            .map(a => engineers.find(e => e.id === a.engineer_id))
+            .filter(Boolean);
+          const covered = assignedEngineers.some(e => (e.skills || []).some(sk => sk.id === s.id));
+          return { covered, engineerCount: assignedEngineers.filter(e => (e.skills || []).some(sk => sk.id === s.id)).length };
+        });
+        return { ...s, activeMonths, monthCoverage };
+      });
+
+      // Project-level gap: any active month with at least one uncovered skill
+      const monthHasGap = MONTHS.map((_, mi) => {
+        if (!activeMonths[mi]) return false;
+        return skillSubRows.some(s => s.monthCoverage[mi] && !s.monthCoverage[mi].covered);
+      });
+
+      return { ...proj, activeMonths, skillSubRows, monthHasGap };
     }).filter(proj => proj.activeMonths.some(Boolean));
-  }, [allProjects, year]);
+  }, [allProjects, assignments, engineers, year]);
 
   const projectRows = useMemo(() => {
     return projects.map(proj => {
@@ -350,25 +370,28 @@ export default function TimelineView() {
                             {proj.skillSubRows.length} skill{proj.skillSubRows.length !== 1 ? 's' : ''}
                           </div>
                         </td>
-                        {proj.activeMonths.map((active, mi) => (
-                          <td key={mi} style={{ padding: '6px 4px', borderBottom: `1px solid ${T.border}`, minWidth: 52, background: active ? `${color}08` : 'transparent' }}>
-                            {active && (
-                              <div style={{
-                                background: `${color}22`,
-                                border: `1px solid ${color}44`,
-                                borderRadius: 4,
-                                padding: '3px 4px',
-                                textAlign: 'center',
-                                fontSize: 10,
-                                fontFamily: T.mono,
-                                color: color,
-                                fontWeight: 500,
-                              }}>
-                                {proj.skillSubRows.length}🔧
-                              </div>
-                            )}
-                          </td>
-                        ))}
+                        {proj.activeMonths.map((active, mi) => {
+                          const hasGap = proj.monthHasGap[mi];
+                          return (
+                            <td key={mi} style={{ padding: '4px', borderBottom: `1px solid ${T.border}`, minWidth: 52, background: active ? `${color}08` : 'transparent' }}>
+                              {active && (
+                                <div style={{
+                                  background: hasGap ? 'rgba(248,113,113,0.15)' : `${color}22`,
+                                  border: `1px solid ${hasGap ? T.red : color}44`,
+                                  borderRadius: 4,
+                                  padding: '3px 4px',
+                                  textAlign: 'center',
+                                  fontSize: 10,
+                                  fontFamily: T.mono,
+                                  color: hasGap ? T.red : color,
+                                  fontWeight: 500,
+                                }}>
+                                  {hasGap ? '⚠ gap' : '✓ ok'}
+                                </div>
+                              )}
+                            </td>
+                          );
+                        })}
                       </tr>
 
                       {/* Skill sub-rows */}
@@ -383,36 +406,26 @@ export default function TimelineView() {
                               )}
                             </div>
                           </td>
-                          {skill.activeMonths.map((active, mi) => (
-                            <td key={mi} style={{ padding: active ? '4px' : '6px 4px', borderBottom: `1px solid ${T.border}`, minWidth: 52, background: T.bg }}>
-                              {active && skill.effort_days != null && (
+                          {skill.monthCoverage.map((coverage, mi) => {
+                            if (!coverage) return <td key={mi} style={{ borderBottom: `1px solid ${T.border}`, minWidth: 52, background: T.bg }} />;
+                            const { covered, engineerCount } = coverage;
+                            return (
+                              <td key={mi} style={{ padding: '4px', borderBottom: `1px solid ${T.border}`, minWidth: 52, background: T.bg }}>
                                 <div style={{
-                                  background: `${color}18`,
-                                  border: `1px solid ${color}44`,
+                                  background: covered ? 'rgba(34,197,94,0.12)' : 'rgba(248,113,113,0.15)',
+                                  border: `1px solid ${covered ? '#22c55e' : T.red}44`,
                                   borderRadius: 4,
                                   padding: '3px 4px',
                                   textAlign: 'center',
                                   fontSize: 10,
                                   fontFamily: T.mono,
-                                  color: color,
+                                  color: covered ? '#16a34a' : T.red,
                                 }}>
-                                  {skill.effort_days}d
+                                  {covered ? `${engineerCount}👤` : '✗'}
                                 </div>
-                              )}
-                              {active && skill.effort_days == null && (
-                                <div style={{
-                                  background: `${color}18`,
-                                  border: `1px solid ${color}44`,
-                                  borderRadius: 4,
-                                  padding: '3px 4px',
-                                  textAlign: 'center',
-                                  fontSize: 10,
-                                  fontFamily: T.mono,
-                                  color: color,
-                                }}>✓</div>
-                              )}
-                            </td>
-                          ))}
+                              </td>
+                            );
+                          })}
                         </tr>
                       ))}
                     </React.Fragment>
@@ -423,7 +436,14 @@ export default function TimelineView() {
           </div>
           <div style={{ marginTop: 16, display: 'flex', gap: 20, flexWrap: 'wrap', fontFamily: T.mono, fontSize: 11, color: T.muted }}>
             <div>Click a project row to expand / collapse</div>
-            <div>Effort days shown per skill across active months</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ width: 24, height: 12, background: 'rgba(34,197,94,0.12)', border: '1px solid #22c55e44', borderRadius: 2 }} />
+              Skill covered by an assigned engineer
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ width: 24, height: 12, background: 'rgba(248,113,113,0.15)', border: `1px solid ${T.red}44`, borderRadius: 2 }} />
+              No assigned engineer with this skill
+            </div>
             {allProjects.map(p => (
               <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <div style={{ width: 10, height: 10, borderRadius: '50%', background: projectColorMap[p.id] }} />
