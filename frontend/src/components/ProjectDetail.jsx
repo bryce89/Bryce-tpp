@@ -144,7 +144,7 @@ export default function ProjectDetail() {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: T.mono, fontSize: 13 }}>
             <thead>
               <tr style={{ borderBottom: `1px solid ${T.border}` }}>
-                {['Engineer', 'Portfolio', 'Role', 'Allocation', 'Start', 'End', ''].map(h => (
+                {['Engineer', 'Portfolio', 'Role', 'Skills', 'Allocation', 'Start', 'End', ''].map(h => (
                   <th key={h} style={{ textAlign: 'left', padding: '6px 10px', color: T.muted, fontWeight: 400, fontSize: 11 }}>{h}</th>
                 ))}
               </tr>
@@ -155,6 +155,23 @@ export default function ProjectDetail() {
                   <td style={{ padding: '10px 10px', color: T.text, fontWeight: 500 }}>{a.engineer_name}</td>
                   <td style={{ padding: '10px 10px', color: T.muted }}>{a.portfolio || '—'}</td>
                   <td style={{ padding: '10px 10px', color: T.muted }}>{a.role || '—'}</td>
+                  <td style={{ padding: '10px 10px' }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                      {(a.skills || []).map(s => (
+                        <span key={s.id} style={{
+                          background: `${T.accent}12`,
+                          border: `1px solid ${T.accent}33`,
+                          color: T.accent,
+                          borderRadius: 4,
+                          padding: '2px 7px',
+                          fontSize: 11,
+                          fontFamily: T.mono,
+                          whiteSpace: 'nowrap',
+                        }}>{s.name}</span>
+                      ))}
+                      {!a.skills?.length && <span style={{ color: T.muted }}>—</span>}
+                    </div>
+                  </td>
                   <td style={{ padding: '10px 10px' }}>
                     <span style={{
                       color: a.allocation_pct === 100 ? T.accent : T.orange,

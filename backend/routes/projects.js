@@ -64,10 +64,17 @@ router.get('/:id', async (req, res) => {
   `, [req.params.id]);
 
   const { rows: assignments } = await pool.query(`
-    SELECT a.*, e.name AS engineer_name, e.portfolio, e.role
+    SELECT a.*, e.name AS engineer_name, e.portfolio, e.role,
+      COALESCE(
+        json_agg(json_build_object('id', s.id, 'name', s.name)) FILTER (WHERE s.id IS NOT NULL),
+        '[]'
+      ) AS skills
     FROM assignments a
     JOIN engineers e ON e.id = a.engineer_id
+    LEFT JOIN engineer_skills es ON es.engineer_id = e.id
+    LEFT JOIN skills s ON s.id = es.skill_id
     WHERE a.project_id = $1
+    GROUP BY a.id, e.name, e.portfolio, e.role
     ORDER BY e.name
   `, [req.params.id]);
 
